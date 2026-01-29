@@ -1,0 +1,982 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alex TOF Analytics Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg-primary: #0f0f23;
+            --bg-secondary: #1a1a2e;
+            --bg-card: #16213e;
+            --accent-primary: #00fff5;
+            --accent-secondary: #ff00ff;
+            --accent-warning: #ffaa00;
+            --accent-success: #00ff88;
+            --accent-danger: #ff3366;
+            --text-primary: #f0f0f0;
+            --text-secondary: #9d9daa;
+            --border: #2d3561;
+            --gradient-1: linear-gradient(135deg, #00fff5 0%, #ff00ff 100%);
+            --gradient-2: linear-gradient(135deg, #ff00ff 0%, #ffaa00 100%);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            overflow-x: hidden;
+            line-height: 1.6;
+        }
+
+        .dashboard-container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 2rem;
+            animation: fadeIn 0.8s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .header {
+            margin-bottom: 3rem;
+            position: relative;
+            padding: 2rem 0;
+        }
+
+        .header::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 1px;
+            background: var(--gradient-1);
+            animation: glow 2s ease-in-out infinite;
+        }
+
+        @keyframes glow {
+            0%, 100% { opacity: 0.5; box-shadow: 0 0 20px var(--accent-primary); }
+            50% { opacity: 1; box-shadow: 0 0 40px var(--accent-primary); }
+        }
+
+        h1 {
+            font-size: 3.5rem;
+            font-weight: 700;
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.5rem;
+            letter-spacing: -3px;
+            text-transform: uppercase;
+        }
+
+        .subtitle {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .executive-summary {
+            background: linear-gradient(135deg, var(--bg-card) 0%, var(--bg-secondary) 100%);
+            border: 1px solid var(--border);
+            border-left: 4px solid var(--accent-primary);
+            border-radius: 16px;
+            padding: 2.5rem;
+            margin-bottom: 3rem;
+            position: relative;
+            overflow: hidden;
+            animation: slideUp 0.9s ease-out backwards;
+            animation-delay: 0.2s;
+        }
+
+        .executive-summary::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(0, 255, 245, 0.15) 0%, transparent 60%);
+            pointer-events: none;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            50% { transform: translate(-20px, 20px) rotate(5deg); }
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(40px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .executive-title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--accent-primary);
+            margin-bottom: 1.5rem;
+            letter-spacing: -1px;
+            text-transform: uppercase;
+        }
+
+        .executive-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .executive-content p {
+            color: var(--text-secondary);
+            font-size: 1.05rem;
+            line-height: 1.9;
+            margin-bottom: 1.2rem;
+        }
+
+        .executive-content strong {
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        .highlight {
+            color: var(--accent-primary);
+            font-weight: 700;
+            font-family: 'IBM Plex Mono', monospace;
+        }
+
+        .highlight-success {
+            color: var(--accent-success);
+            font-weight: 700;
+            font-family: 'IBM Plex Mono', monospace;
+            background: rgba(0, 255, 136, 0.15);
+            padding: 3px 8px;
+            border-radius: 4px;
+        }
+
+        .highlight-warning {
+            color: var(--accent-warning);
+            font-weight: 700;
+            font-family: 'IBM Plex Mono', monospace;
+            background: rgba(255, 170, 0, 0.15);
+            padding: 3px 8px;
+            border-radius: 4px;
+        }
+
+        .key-finding {
+            background: var(--bg-primary);
+            border-left: 4px solid var(--accent-warning);
+            padding: 1.2rem 1.8rem;
+            margin-top: 1.5rem;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            box-shadow: 0 4px 20px rgba(255, 170, 0, 0.1);
+        }
+
+        .key-finding strong {
+            color: var(--accent-warning);
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        @media (max-width: 1400px) {
+            .metrics-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        @media (max-width: 1000px) {
+            .metrics-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .metrics-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .metric-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 2rem;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            animation: slideUp 0.7s ease-out backwards;
+        }
+
+        .metric-card:nth-child(1) { animation-delay: 0.1s; }
+        .metric-card:nth-child(2) { animation-delay: 0.15s; }
+        .metric-card:nth-child(3) { animation-delay: 0.2s; }
+        .metric-card:nth-child(4) { animation-delay: 0.25s; }
+        .metric-card:nth-child(5) { animation-delay: 0.3s; }
+        .metric-card:nth-child(6) { animation-delay: 0.35s; }
+
+        .metric-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: var(--gradient-1);
+            transform: scaleX(0);
+            transition: transform 0.4s ease;
+            transform-origin: left;
+        }
+
+        .metric-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .metric-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            border-color: var(--accent-primary);
+            box-shadow: 0 20px 60px rgba(0, 255, 245, 0.2);
+        }
+
+        .metric-label {
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--text-secondary);
+            margin-bottom: 0.8rem;
+            font-weight: 600;
+        }
+
+        .metric-value {
+            font-size: 3rem;
+            font-weight: 700;
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-family: 'IBM Plex Mono', monospace;
+            line-height: 1;
+            margin-bottom: 0.5rem;
+        }
+
+        .metric-subtext {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        .chart-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(550px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .chart-container {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 2.5rem;
+            padding-left: 4rem;
+            position: relative;
+            animation: slideUp 1s ease-out backwards;
+        }
+        
+        .chart-container canvas {
+            margin-left: 20px;
+        }
+
+        .chart-container:nth-child(1) { animation-delay: 0.4s; }
+        .chart-container:nth-child(2) { animation-delay: 0.5s; }
+
+        .chart-title {
+            font-size: 1.4rem;
+            font-weight: 600;
+            margin-bottom: 2rem;
+            color: var(--text-primary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .insights-section {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 2.5rem;
+            margin-bottom: 2rem;
+            animation: slideUp 1.1s ease-out backwards;
+            animation-delay: 0.6s;
+        }
+
+        .insights-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 2rem;
+            background: var(--gradient-2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .insight-item {
+            background: var(--bg-card);
+            border-left: 4px solid var(--accent-primary);
+            padding: 1.5rem;
+            margin-bottom: 1.2rem;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .insight-item:hover {
+            transform: translateX(15px);
+            border-left-color: var(--accent-secondary);
+            box-shadow: 0 8px 30px rgba(255, 0, 255, 0.15);
+        }
+
+        .insight-title {
+            font-weight: 600;
+            margin-bottom: 0.7rem;
+            color: var(--accent-primary);
+            font-size: 1.1rem;
+        }
+
+        .insight-text {
+            color: var(--text-secondary);
+            font-size: 1rem;
+            line-height: 1.7;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 0.7rem;
+            animation: pulse 2.5s ease-in-out infinite;
+            box-shadow: 0 0 10px currentColor;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.6; transform: scale(1.1); }
+        }
+
+        .status-success { background: var(--accent-success); }
+        .status-warning { background: var(--accent-warning); }
+        .status-danger { background: var(--accent-danger); }
+        .status-info { background: var(--accent-primary); }
+
+        .data-table {
+            width: 100%;
+            margin-top: 2rem;
+            border-collapse: collapse;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.9rem;
+        }
+
+        .data-table th {
+            background: var(--bg-primary);
+            padding: 1.2rem;
+            text-align: left;
+            color: var(--accent-primary);
+            font-weight: 600;
+            border-bottom: 2px solid var(--accent-primary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .data-table td {
+            padding: 1rem 1.2rem;
+            border-bottom: 1px solid var(--border);
+            color: var(--text-secondary);
+        }
+
+        .data-table tr:hover {
+            background: var(--bg-card);
+        }
+
+        .tabs {
+            display: flex;
+            gap: 1.5rem;
+            margin-bottom: 2.5rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .tab {
+            padding: 1.2rem 2.5rem;
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .tab::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: var(--gradient-1);
+            transform: scaleX(0);
+            transition: transform 0.3s ease;
+        }
+
+        .tab:hover {
+            color: var(--accent-primary);
+        }
+
+        .tab.active {
+            color: var(--accent-primary);
+        }
+
+        .tab.active::after {
+            transform: scaleX(1);
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .stat-badge {
+            display: inline-block;
+            padding: 0.4rem 1rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            font-family: 'IBM Plex Mono', monospace;
+            margin-right: 0.5rem;
+        }
+
+        .stat-badge.success {
+            background: rgba(0, 255, 136, 0.2);
+            color: var(--accent-success);
+            border: 1px solid var(--accent-success);
+        }
+
+        .stat-badge.warning {
+            background: rgba(255, 170, 0, 0.2);
+            color: var(--accent-warning);
+            border: 1px solid var(--accent-warning);
+        }
+
+        .stat-badge.info {
+            background: rgba(0, 255, 245, 0.2);
+            color: var(--accent-primary);
+            border: 1px solid var(--accent-primary);
+        }
+
+        @media (max-width: 768px) {
+            h1 { font-size: 2.5rem; }
+            .chart-section { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <div class="header">
+            <h1>Alex AI Recruiter – Top of Funnel Analysis</h1>
+            <p class="subtitle">Date Range analyzed • [2025-11-10 → 2026-01-15]</p>
+        </div>
+
+        <div class="executive-summary">
+            <h2 class="executive-title">Executive Summary</h2>
+            <div class="executive-content">
+                <p>This analysis evaluates <strong>Top-of-Funnel (TOF)</strong> performance for Alex AI Recruiter's automated interview platform from approximately November 2025 through mid-January 2026, covering <span class="highlight">5,839 total interview invitations</span>.</p>
+                
+                <p>The platform achieved an overall interview completion rate of <span class="highlight-warning">34.0%</span> (1,986 completed interviews), representing a reasonable baseline level of candidate engagement for automated outreach, with meaningful opportunity for improvement as messaging, cadence, and targeting mature.</p>
+                
+                <p>From an engagement perspective, <span class="highlight-success">47.8% of invited candidates</span> have taken action after receiving an invitation, progressing beyond the initial "Sent" state into scheduling, completion, or other downstream statuses. Conversely, <span class="highlight-warning">52.2% of invitations remain pending response</span>, indicating the primary optimization opportunity lies in improving candidate activation and response rates.</p>
+                
+                <p>Operational throughput remains highly efficient, averaging approximately <span class="highlight-success">29 completed interviews per day</span> at roughly <span class="highlight-success">6 hours of daily system runtime</span>, yielding approximately <strong>4.8 interviews per hour</strong>. This materially exceeds sustainable human recruiter capacity and demonstrates tangible automation ROI.</p>
+                
+                <p class="key-finding">Overall performance indicates that <strong>downstream interview execution is functioning well</strong> once candidates engage, while <strong>upstream activation and response remain the highest-leverage improvement area.</strong></p>
+            </div>
+        </div>
+
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <div class="metric-label">Invitations</div>
+                <div class="metric-value">5,839</div>
+                <div class="metric-subtext">Total Invites Sent</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Response Rate</div>
+                <div class="metric-value">47.8%</div>
+                <div class="metric-subtext">2,789 acted / 5,839 invited</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Pending Responses</div>
+                <div class="metric-value">52.2%</div>
+                <div class="metric-subtext">Invites pending in Sent status</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Overall Conversion</div>
+                <div class="metric-value">34.0%</div>
+                <div class="metric-subtext">1,986 Completed / 5,839 Invitations</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Invites Progressed</div>
+                <div class="metric-value">2,789</div>
+                <div class="metric-subtext">Invites that moved beyond Sent status</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Non-Completed Outcomes</div>
+                <div class="metric-value">803</div>
+                <div class="metric-subtext">Scheduled + Paused + Incomplete</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Daily Interviews</div>
+                <div class="metric-value">~29</div>
+                <div class="metric-subtext">Average per day</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Interviews/Hour</div>
+                <div class="metric-value">4.8</div>
+                <div class="metric-subtext">Strong automation leverage</div>
+            </div>
+        </div>
+
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('funnel')">Funnel Analysis</button>
+            <button class="tab" onclick="switchTab('efficiency')">Operational Efficiency</button>
+            <button class="tab" onclick="switchTab('insights')">Key Insights</button>
+        </div>
+
+        <div id="funnel" class="tab-content active">
+            <div class="chart-section">
+                <div class="chart-container">
+                    <h3 class="chart-title">Candidate Engagement Funnel</h3>
+                    <canvas id="funnelChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <h3 class="chart-title">Status Distribution</h3>
+                    <canvas id="statusChart"></canvas>
+                </div>
+            </div>
+
+            <div class="insights-section">
+                <h3 class="insights-title">Funnel Breakdown</h3>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Funnel Layer</th>
+                            <th>Count</th>
+                            <th>% of Total</th>
+                            <th>Context</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><span class="status-indicator status-info"></span>Total Invitations</td>
+                            <td>5,839</td>
+                            <td>100%</td>
+                            <td>All invitations created and sent</td>
+                        </tr>
+                        <tr>
+                            <td><span class="status-indicator status-warning"></span>Pending Response (Sent status)</td>
+                            <td>3,050</td>
+                            <td>52.2%</td>
+                            <td>Invitations awaiting candidate action</td>
+                        </tr>
+                        <tr>
+                            <td><span class="status-indicator status-success"></span>Progressed Beyond Sent</td>
+                            <td>2,789</td>
+                            <td>47.8%</td>
+                            <td>Candidates who took action after invitation</td>
+                        </tr>
+                        <tr>
+                            <td><span class="status-indicator status-success"></span>Completed</td>
+                            <td>1,986</td>
+                            <td>34.0%</td>
+                            <td>Successfully finished interviews</td>
+                        </tr>
+                        <tr>
+                            <td><span class="status-indicator status-warning"></span>In Progress</td>
+                            <td>361</td>
+                            <td>6.2%</td>
+                            <td>Scheduled (168) + Applied (193)</td>
+                        </tr>
+                        <tr>
+                            <td><span class="status-indicator status-danger"></span>Stalled/Incomplete</td>
+                            <td>428</td>
+                            <td>7.3%</td>
+                            <td>Paused (230) + Incomplete (198)</td>
+                        </tr>
+                        <tr>
+                            <td><span class="status-indicator status-info"></span>Other Active</td>
+                            <td>14</td>
+                            <td>0.2%</td>
+                            <td>Opened (13) + Active (1)</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="efficiency" class="tab-content">
+            <div class="chart-section">
+                <div class="chart-container">
+                    <h3 class="chart-title">Daily Interview Volume</h3>
+                    <canvas id="volumeChart"></canvas>
+                    <p style="margin-top: 1rem; font-size: 0.9rem; color: var(--text-secondary); font-style: italic;">
+                        Average 29 interviews/day with peaks reaching 75-80, showing strong demand elasticity
+                    </p>
+                </div>
+<div class="chart-container" style="max-width: 1000px; margin: 0 auto;">
+    <h3 class="chart-title">Daily Activity Breakdown (Peak Day)</h3>
+    <canvas id="workloadChart"></canvas>
+</div>
+            </div>
+
+            <div class="insights-section">
+                <h3 class="insights-title">Operational Metrics</h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;">
+                    <div style="background: var(--bg-card); padding: 1.5rem; border-radius: 12px; border-left: 4px solid var(--accent-success);">
+                        <h4 style="color: var(--accent-success); margin-bottom: 0.5rem; font-size: 1.1rem;">Automation Leverage</h4>
+                        <p style="color: var(--text-secondary); margin-bottom: 1rem;">~4.8 interviews per hour — materially higher than human recruiter capacity</p>
+                        <span class="stat-badge success">High ROI</span>
+                    </div>
+                    <div style="background: var(--bg-card); padding: 1.5rem; border-radius: 12px; border-left: 4px solid var(--accent-warning);">
+                        <h4 style="color: var(--accent-warning); margin-bottom: 0.5rem; font-size: 1.1rem;">Daily Workload</h4>
+                        <p style="color: var(--text-secondary); margin-bottom: 1rem;">~6 hours/day across interviewing, ATS updates, and outbound communication</p>
+                        <span class="stat-badge warning">Admin Relief</span>
+                    </div>
+                    <div style="background: var(--bg-card); padding: 1.5rem; border-radius: 12px; border-left: 4px solid var(--accent-primary);">
+                        <h4 style="color: var(--accent-primary); margin-bottom: 0.5rem; font-size: 1.1rem;">Volume Variance</h4>
+                        <p style="color: var(--text-secondary); margin-bottom: 1rem;">Peaks at 75-80 interviews/day with holiday softness, reflecting demand elasticity</p>
+                        <span class="stat-badge info">Scalable</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="insights" class="tab-content">
+            <div class="insights-section">
+                <h3 class="insights-title">Critical Findings & Recommendations</h3>
+                
+                <div class="insight-item">
+                    <div class="insight-title">
+                        <span class="status-indicator status-success"></span>
+                         Post-Contact Conversion
+                    </div>
+                    <div class="insight-text">
+                        <strong>Finding:</strong> Alex achieved a 34.0% overall interview completion rate (1,986 completed out of 5,839 invitations). This represents a reasonable baseline for automated outreach, but indicates meaningful headroom for improvement as activation strategies mature.
+                    </div>
+                </div>
+
+                <div class="insight-item">
+                    <div class="insight-title">
+                        <span class="status-indicator status-danger"></span>
+                         Primary Bottleneck: Candidate Response Activation
+                    </div>
+                    <div class="insight-text">
+                        <strong>Finding:</strong> 52.2% of invitations remain pending response in the “Sent” state, while 47.8% of invited candidates have taken action. The largest opportunity is improving candidate response activation through messaging quality, cadence, and channel effectiveness
+                    </div>
+                </div>
+
+                <div class="insight-item">
+                    <div class="insight-title">
+                        <span class="status-indicator status-success"></span>
+                        Proven Automation ROI
+                    </div>
+                    <div class="insight-text">
+                        <strong>Finding:</strong> Alex delivers approximately 4.8 completed interviews per hour, materially exceeding sustainable human recruiter throughput and demonstrating clear automation-driven productivity and ROI.
+                    </div>
+                </div>
+
+                <div class="insight-item">
+                    <div class="insight-title">
+                        <span class="status-indicator status-warning"></span>
+                         Mid-Funnel Friction Opportunity
+                    </div>
+                    <div class="insight-text">
+                        <strong>Finding:</strong> Approximately 803 candidates (~13.8% of total invitations, or ~28.8% of engaged candidates) fall into non-completion outcomes (Scheduled, Paused, Incomplete, Missed). This represents a secondary optimization opportunity to reduce drop-off once candidates engage.
+                    </div>
+                </div>
+
+                <div class="insight-item">
+                    <div class="insight-title">
+                        <span class="status-indicator status-info"></span>
+                        Positive Candidate Experience Signal
+                    </div>
+                    <div class="insight-text">
+                        <strong>Finding:</strong> Candidate feedback ratings skew strongly toward 4–5 stars with minimal 1–2 star detractors, indicating positive perceived experience. While sample size and response bias should be considered, this provides a supportive directional signal on interview quality.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const chartColors = {
+            primary: 'rgba(0, 255, 245, 0.9)',
+            primaryBorder: 'rgba(0, 255, 245, 1)',
+            secondary: 'rgba(255, 0, 255, 0.9)',
+            secondaryBorder: 'rgba(255, 0, 255, 1)',
+            warning: 'rgba(255, 170, 0, 0.9)',
+            warningBorder: 'rgba(255, 170, 0, 1)',
+            success: 'rgba(0, 255, 136, 0.9)',
+            successBorder: 'rgba(0, 255, 136, 1)',
+            danger: 'rgba(255, 51, 102, 0.9)',
+            dangerBorder: 'rgba(255, 51, 102, 1)',
+            text: '#f0f0f0',
+            grid: '#2d3561'
+        };
+
+        const chartDefaults = {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    labels: {
+                        color: chartColors.text,
+                        font: { family: 'Space Grotesk', size: 13, weight: '600' }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    ticks: { color: chartColors.text, font: { family: 'IBM Plex Mono' } },
+                    grid: { color: chartColors.grid }
+                },
+                x: {
+                    ticks: { color: chartColors.text, font: { family: 'IBM Plex Mono' } },
+                    grid: { color: chartColors.grid }
+                }
+            }
+        };
+
+        // Funnel Chart
+        const funnelCtx = document.getElementById('funnelChart').getContext('2d');
+        new Chart(funnelCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Total Invitations', 'Responded', 'Completed'],
+                datasets: [{
+                    label: 'Invitation Count',
+                    data: [5839, 2789, 1986],
+                    backgroundColor: [
+                        chartColors.primary,
+                        chartColors.warning,
+                        chartColors.success
+                    ],
+                    borderColor: [
+                        chartColors.primaryBorder,
+                        chartColors.warningBorder,
+                        chartColors.successBorder
+                    ],
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                layout: {
+                    padding: {
+                        left: 20,
+                        right: 20
+                    }
+                },
+                plugins: {
+                    legend: {
+                        labels: {
+                            color: chartColors.text,
+                            font: { family: 'Space Grotesk', size: 13, weight: '600' }
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            afterLabel: function(context) {
+                                const idx = context.dataIndex;
+                                const rates = ['100% (all invitations)', '47.8% (took action)', '34.0% (completed)'];
+                                return `${rates[idx]}`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        ticks: { 
+                            color: chartColors.text, 
+                            font: { family: 'IBM Plex Mono' },
+                            padding: 10
+                        },
+                        grid: { color: chartColors.grid }
+                    },
+                    x: {
+                        ticks: { 
+                            color: chartColors.text, 
+                            font: { family: 'IBM Plex Mono' }
+                        },
+                        grid: { color: chartColors.grid }
+                    }
+                }
+            }
+        });
+
+        // Status Distribution Chart
+        const statusCtx = document.getElementById('statusChart').getContext('2d');
+        new Chart(statusCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Invite Sent', 'Completed', 'Paused', 'Incomplete', 'Applied', 'Scheduled', 'Other'],
+                datasets: [{
+                    data: [3050, 1986, 230, 198, 193, 168, 14],
+                    backgroundColor: [
+                        chartColors.primary,
+                        chartColors.success,
+                        chartColors.warning,
+                        chartColors.danger,
+                        chartColors.secondary,
+                        'rgba(100, 200, 255, 0.8)',
+                        'rgba(150, 150, 160, 0.6)'
+                    ],
+                    borderWidth: 2,
+                    borderColor: '#16213e'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            color: chartColors.text,
+                            font: { family: 'Space Grotesk', size: 12 },
+                            padding: 20
+                        }
+                    }
+                }
+            }
+        });
+
+        // Daily Volume Chart
+        const volumeCtx = document.getElementById('volumeChart').getContext('2d');
+        new Chart(volumeCtx, {
+            type: 'line',
+            data: {
+                labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4', 'Week 5', 'Week 6', 'Week 7', 'Week 8', 'Week 9'],
+                datasets: [{
+                    label: 'Interviews per Day',
+                    data: [28, 35, 42, 38, 25, 15, 18, 32, 38],
+                    borderColor: chartColors.primaryBorder,
+                    backgroundColor: chartColors.primary,
+                    tension: 0.4,
+                    fill: true,
+                    pointRadius: 5,
+                    pointHoverRadius: 7,
+                    pointBackgroundColor: chartColors.primaryBorder
+                }]
+            },
+            options: {
+                ...chartDefaults,
+                scales: {
+                    y: {
+                        ...chartDefaults.scales.y,
+                        beginAtZero: true,
+                        max: 85,
+                        title: {
+                            display: true,
+                            text: 'Daily Interview Count',
+                            color: chartColors.text
+                        }
+                    },
+                    x: {
+                        ...chartDefaults.scales.x,
+                        title: {
+                            display: true,
+                            text: 'Time Period',
+                            color: chartColors.text
+                        }
+                    }
+                }
+            }
+        });
+
+        // Activity Breakdown Chart
+        const workloadCtx = document.getElementById('workloadChart').getContext('2d');
+        new Chart(workloadCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Interviewing', 'Updating ATS', 'Sending Texts', 'Writing Emails'],
+                datasets: [{
+                    data: [17.2, 2.6, 0.8, 0.3],
+                    backgroundColor: [
+                        chartColors.success,
+                        chartColors.warning,
+                        'rgba(255, 200, 100, 0.9)',
+                        chartColors.primary
+                    ],
+                    borderWidth: 2,
+                    borderColor: '#16213e'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            color: chartColors.text,
+                            font: { family: 'Space Grotesk', size: 12 },
+                            padding: 20
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const total = 20.9;
+                                const percentage = ((context.parsed / total) * 100).toFixed(1);
+                                return context.label + ': ' + context.parsed + ' hrs (' + percentage + '%)';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            event.target.classList.add('active');
+            document.getElementById(tabName).classList.add('active');
+        }
+    </script>
+</body>
+</html>
