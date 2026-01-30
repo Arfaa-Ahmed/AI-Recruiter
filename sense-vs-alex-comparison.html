@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sense vs Alex - Performance Comparison</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700;900&family=Azeret+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg: #0a0d14;
+            --surface: #141821;
+            --surface-elevated: #1c2028;
+            --sense-primary: #00ff88;
+            --alex-primary: #00d4ff;
+            --sense-glow: rgba(0, 255, 136, 0.3);
+            --alex-glow: rgba(0, 212, 255, 0.3);
+            --winner: #ffed4e;
+            --text: #e8edf5;
+            --text-muted: #8f99ad;
+            --border: #262d3a;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.5;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 1800px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 4rem;
+            position: relative;
+        }
+
+        header::before {
+            content: '';
+            position: absolute;
+            top: -30px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 300px;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--sense-primary), var(--alex-primary), transparent);
+        }
+
+        h1 {
+            font-size: 4rem;
+            font-weight: 900;
+            letter-spacing: -2px;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, var(--sense-primary), var(--alex-primary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            font-family: 'Azeret Mono', monospace;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+        }
+
+        .legend {
+            display: flex;
+            justify-content: center;
+            gap: 3rem;
+            margin-bottom: 3rem;
+            padding: 1.5rem;
+            background: var(--surface);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .legend-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .legend-dot.sense { background: var(--sense-primary); box-shadow: 0 0 20px var(--sense-glow); }
+        .legend-dot.alex { background: var(--alex-primary); box-shadow: 0 0 20px var(--alex-glow); }
+
+        .legend-text {
+            font-weight: 500;
+            font-size: 1.1rem;
+        }
+
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .metric-comparison {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .metric-comparison::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(90deg, var(--sense-primary), var(--alex-primary));
+            opacity: 0.5;
+        }
+
+        .metric-title {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--text-muted);
+            margin-bottom: 1.5rem;
+            font-weight: 600;
+        }
+
+        .metric-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding: 1rem;
+            background: var(--surface-elevated);
+            border-radius: 8px;
+            position: relative;
+        }
+
+        .metric-row.winner-sense {
+            border-left: 3px solid var(--sense-primary);
+            box-shadow: 0 0 30px rgba(0, 255, 136, 0.1);
+        }
+
+        .metric-row.winner-alex {
+            border-left: 3px solid var(--alex-primary);
+            box-shadow: 0 0 30px rgba(0, 212, 255, 0.1);
+        }
+
+        .metric-side {
+            flex: 1;
+            text-align: center;
+        }
+
+        .metric-label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-bottom: 0.3rem;
+            font-family: 'Azeret Mono', monospace;
+        }
+
+        .metric-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            font-family: 'Azeret Mono', monospace;
+        }
+
+        .metric-value.sense { color: var(--sense-primary); }
+        .metric-value.alex { color: var(--alex-primary); }
+
+        .metric-subtext {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 0.2rem;
+        }
+
+        .vs-divider {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            padding: 0 1rem;
+            opacity: 0.3;
+        }
+
+
+
+        .funnel-section {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 2.5rem;
+            margin-bottom: 3rem;
+        }
+
+        .funnel-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .funnel-visual {
+            display: flex;
+            justify-content: center;
+            gap: 4rem;
+            margin-bottom: 2rem;
+        }
+
+        .funnel-column {
+            flex: 1;
+            max-width: 400px;
+        }
+
+        .funnel-column-title {
+            text-align: center;
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+        }
+
+        .funnel-column-title.sense { color: var(--sense-primary); }
+        .funnel-column-title.alex { color: var(--alex-primary); }
+
+        .funnel-stage {
+            background: var(--surface-elevated);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            text-align: center;
+            position: relative;
+        }
+
+        .funnel-stage.sense { border-left: 3px solid var(--sense-primary); }
+        .funnel-stage.alex { border-left: 3px solid var(--alex-primary); }
+
+        .funnel-stage-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+        }
+
+        .funnel-stage-value {
+            font-size: 2rem;
+            font-weight: 700;
+            font-family: 'Azeret Mono', monospace;
+            margin-bottom: 0.3rem;
+        }
+
+        .funnel-stage-value.sense { color: var(--sense-primary); }
+        .funnel-stage-value.alex { color: var(--alex-primary); }
+
+        .funnel-stage-percent {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+
+        .chart-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .chart-container {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 2rem;
+        }
+
+        .chart-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            text-align: center;
+            color: var(--text);
+        }
+
+        .insights-section {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 2.5rem;
+        }
+
+        .insights-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .insight-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+
+        .insight-card {
+            background: var(--surface-elevated);
+            border-radius: 12px;
+            padding: 1.5rem;
+            border-left: 3px solid var(--border);
+        }
+
+        .insight-card.sense { border-left-color: var(--sense-primary); }
+        .insight-card.alex { border-left-color: var(--alex-primary); }
+
+        .insight-header {
+            font-weight: 700;
+            margin-bottom: 0.8rem;
+            font-size: 1.05rem;
+        }
+
+        .insight-header.sense { color: var(--sense-primary); }
+        .insight-header.alex { color: var(--alex-primary); }
+
+        .insight-text {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+
+        .key-takeaway {
+            background: linear-gradient(135deg, var(--surface-elevated), var(--surface));
+            border: 2px solid var(--border);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-top: 3rem;
+            text-align: center;
+        }
+
+        .key-takeaway-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: var(--winner);
+        }
+
+        .key-takeaway-text {
+            font-size: 1.1rem;
+            line-height: 1.8;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        @media (max-width: 1200px) {
+            .comparison-grid {
+                grid-template-columns: 1fr;
+            }
+            .funnel-visual {
+                flex-direction: column;
+                gap: 2rem;
+            }
+            .chart-grid {
+                grid-template-columns: 1fr;
+            }
+            .insight-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            h1 { font-size: 2.5rem; }
+            .metric-value { font-size: 2rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Sense vs Alex</h1>
+            <p class="subtitle">Performance Comparison • Nov 10, 2025 – Jan 15, 2026</p>
+        </header>
+
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-dot sense"></div>
+                <span class="legend-text">Sense AI (Voice)</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-dot alex"></div>
+                <span class="legend-text">Alex AI (SMS)</span>
+            </div>
+        </div>
+
+        <!-- Channel Difference Warning -->
+        <div style="background: rgba(255, 237, 78, 0.15); border: 2px solid var(--winner); border-radius: 12px; padding: 1.5rem; margin-bottom: 3rem; text-align: center;">
+            <div style="font-size: 1.2rem; font-weight: 700; color: var(--winner); margin-bottom: 0.5rem;">
+                 Important Context
+            </div>
+            <div style="color: var(--text); line-height: 1.7;">
+                <strong>Sense uses proactive, synchronous voice outreach by directly calling candidates, whereas Alex relies on passive, asynchronous SMS invitations that require candidates to initiate scheduling. These fundamentally different engagement models make direct conversion comparison misleading without channel normalization.
+            </div>
+        </div>
+
+        <!-- Core Metrics Comparison -->
+        <div class="comparison-grid">
+            <div class="metric-comparison">
+                <div class="metric-title"> Overall Conversion Rate</div>
+                <div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 1rem; font-style: italic;">
+                    Note: Sense = answered call → completed | Alex = received SMS → completed
+                </div>
+                <div class="metric-row winner-sense">
+                    <div class="metric-side">
+                        <div class="metric-label">Sense</div>
+                        <div class="metric-value sense">48.1%</div>
+                        <div class="metric-subtext">1,547 / 3,215 candidates</div>
+                    </div>
+                    <div class="vs-divider">VS</div>
+                    <div class="metric-side">
+                        <div class="metric-label">Alex</div>
+                        <div class="metric-value alex">34.0%</div>
+                        <div class="metric-subtext">1,986 / 5,839 invitations</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="metric-comparison">
+                <div class="metric-title"> Connection/Response Rate</div>
+                <div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 1rem; font-style: italic;">
+                    Note: Sense = answered phone | Alex = opened/acted on SMS
+                </div>
+                <div class="metric-row winner-sense">
+                    <div class="metric-side">
+                        <div class="metric-label">Sense</div>
+                        <div class="metric-value sense">62.4%</div>
+                        <div class="metric-subtext">2,005 connected</div>
+                    </div>
+                    <div class="vs-divider">VS</div>
+                    <div class="metric-side">
+                        <div class="metric-label">Alex</div>
+                        <div class="metric-value alex">47.8%</div>
+                        <div class="metric-subtext">2,789 responded</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="metric-comparison">
+                <div class="metric-title"> Completion Rate (Post-Engagement)</div>
+                <div class="metric-row winner-sense">
+                    <div class="metric-side">
+                        <div class="metric-label">Sense</div>
+                        <div class="metric-value sense">77.2%</div>
+                        <div class="metric-subtext">1,547 / 2,005 connected</div>
+                    </div>
+                    <div class="vs-divider">VS</div>
+                    <div class="metric-side">
+                        <div class="metric-label">Alex</div>
+                        <div class="metric-value alex">71.2%</div>
+                        <div class="metric-subtext">1,986 / 2,789 responded</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="metric-comparison">
+                <div class="metric-title"> Total Volume Processed</div>
+                <div class="metric-row winner-alex">
+                    <div class="metric-side">
+                        <div class="metric-label">Sense</div>
+                        <div class="metric-value sense">3,215</div>
+                        <div class="metric-subtext">unique candidates</div>
+                    </div>
+                    <div class="vs-divider">VS</div>
+                    <div class="metric-side">
+                        <div class="metric-label">Alex</div>
+                        <div class="metric-value alex">5,839</div>
+                        <div class="metric-subtext">total invitations</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Funnel Visualization -->
+        <div class="funnel-section">
+            <h2 class="funnel-title">Conversion Funnel Breakdown</h2>
+            <div class="funnel-visual">
+                <div class="funnel-column">
+                    <div class="funnel-column-title sense">Sense (Voice)</div>
+                    
+                    <div class="funnel-stage sense">
+                        <div class="funnel-stage-label">Contacted</div>
+                        <div class="funnel-stage-value sense">3,215</div>
+                        <div class="funnel-stage-percent">100%</div>
+                    </div>
+
+                    <div class="funnel-stage sense">
+                        <div class="funnel-stage-label">Connected</div>
+                        <div class="funnel-stage-value sense">2,005</div>
+                        <div class="funnel-stage-percent">62.4% of contacted</div>
+                    </div>
+
+                    <div class="funnel-stage sense">
+                        <div class="funnel-stage-label">Completed</div>
+                        <div class="funnel-stage-value sense">1,547</div>
+                        <div class="funnel-stage-percent">48.1% of contacted</div>
+                    </div>
+
+                    <div class="funnel-stage sense" style="background: rgba(0, 255, 136, 0.1);">
+                        <div class="funnel-stage-label">Drop-off Point</div>
+                        <div class="funnel-stage-value sense" style="font-size: 1.2rem;">37.6%</div>
+                        <div class="funnel-stage-percent">Never connected (voicemail, no answer)</div>
+                    </div>
+                </div>
+
+                <div class="funnel-column">
+                    <div class="funnel-column-title alex">Alex (SMS)</div>
+                    
+                    <div class="funnel-stage alex">
+                        <div class="funnel-stage-label">Invited</div>
+                        <div class="funnel-stage-value alex">5,839</div>
+                        <div class="funnel-stage-percent">100%</div>
+                    </div>
+
+                    <div class="funnel-stage alex">
+                        <div class="funnel-stage-label">Responded</div>
+                        <div class="funnel-stage-value alex">2,789</div>
+                        <div class="funnel-stage-percent">47.8% of invited</div>
+                    </div>
+
+                    <div class="funnel-stage alex">
+                        <div class="funnel-stage-label">Completed</div>
+                        <div class="funnel-stage-value alex">1,986</div>
+                        <div class="funnel-stage-percent">34.0% of invited</div>
+                    </div>
+
+                    <div class="funnel-stage alex" style="background: rgba(0, 212, 255, 0.1);">
+                        <div class="funnel-stage-label">Drop-off Point</div>
+                        <div class="funnel-stage-value alex" style="font-size: 1.2rem;">52.2%</div>
+                        <div class="funnel-stage-percent">Pending response (invite sent)</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts -->
+        <div class="chart-grid">
+            <div class="chart-container">
+                <h3 class="chart-title">Funnel Comparison</h3>
+                <canvas id="funnelChart"></canvas>
+            </div>
+
+            <div class="chart-container">
+                <h3 class="chart-title">Drop-off Stage Analysis</h3>
+                <canvas id="dropoffChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Key Insights -->
+        <div class="insights-section">
+            <h2 class="insights-title">Key Insights</h2>
+            <div class="insight-grid">
+                <div class="insight-card sense">
+                    <div class="insight-header sense">✓ Sense Strengths</div>
+                    <div class="insight-text">
+                        <strong>Higher conversion:</strong> 48.1% overall vs Alex's 34.0%<br><br>
+                        <strong>Better connection rate:</strong> 62.4% connect vs Alex's 47.8% response<br><br>
+                        <strong>Strong post-engagement:</strong> 77.2% complete after connecting<br><br>
+                        <strong>Real-time engagement:</strong> Voice calls create immediate interaction
+                    </div>
+                </div>
+
+                <div class="insight-card alex">
+                    <div class="insight-header alex">✓ Alex Strengths</div>
+                    <div class="insight-text">
+                        <strong>Higher volume:</strong> 5,839 invitations vs Sense's 3,215 candidates<br><br>
+                        <strong>More completions:</strong> 1,986 total vs Sense's 1,547<br><br>
+                        <strong>Strong automation ROI:</strong> 4.8 interviews/hour throughput<br><br>
+                        <strong>Scalable outreach:</strong> SMS allows mass distribution
+                    </div>
+                </div>
+
+                <div class="insight-card sense">
+                    <div class="insight-header sense">⚠ Sense Challenges</div>
+                    <div class="insight-text">
+                        <strong>Pre-connection drop-off:</strong> 37.6% never connect (voicemail/no answer)<br><br>
+                        <strong>Lower total volume:</strong> Processed fewer candidates overall<br><br>
+                        <strong>Timing dependency:</strong> Performance varies significantly by time of day
+                    </div>
+                </div>
+
+                <div class="insight-card alex">
+                    <div class="insight-header alex">⚠ Alex Challenges</div>
+                    <div class="insight-text">
+                        <strong>Low initial response:</strong> 52.2% of invitations remain pending<br><br>
+                        <strong>Candidate activation:</strong> Biggest bottleneck is getting recipients to act<br><br>
+                        <strong>Channel limitations:</strong> SMS requires candidate-initiated action vs real-time engagement
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Key Takeaway -->
+        <div class="key-takeaway">
+            <div class="key-takeaway-title"> Critical Context</div>
+            <div class="key-takeaway-text">
+                <strong style="color: var(--winner);">These systems are NOT directly comparable.</strong> Sense uses <strong>proactive voice calls</strong> (phone rings, candidate answers) while Alex uses <strong>passive SMS invitations</strong> (candidate must initiate scheduling). Sense's higher conversion (48.1% vs 34.0%) reflects the advantage of real-time synchronous engagement vs asynchronous text-based activation. <strong>Direct comparison requires channel normalization</strong> — for example, comparing Sense's voice performance to Alex's performance if Alex also made outbound calls, or comparing SMS-to-SMS engagement rates.
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const chartColors = {
+            sense: 'rgba(0, 255, 136, 0.8)',
+            senseBorder: 'rgba(0, 255, 136, 1)',
+            alex: 'rgba(0, 212, 255, 0.8)',
+            alexBorder: 'rgba(0, 212, 255, 1)',
+            text: '#e8edf5',
+            grid: '#262d3a'
+        };
+
+        // Funnel Comparison Chart
+        const funnelCtx = document.getElementById('funnelChart').getContext('2d');
+        new Chart(funnelCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Initial Contact', 'Engaged/Responded', 'Completed'],
+                datasets: [
+                    {
+                        label: 'Sense (Voice)',
+                        data: [100, 62.4, 48.1],
+                        backgroundColor: chartColors.sense,
+                        borderColor: chartColors.senseBorder,
+                        borderWidth: 2
+                    },
+                    {
+                        label: 'Alex (SMS)',
+                        data: [100, 47.8, 34.0],
+                        backgroundColor: chartColors.alex,
+                        borderColor: chartColors.alexBorder,
+                        borderWidth: 2
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        labels: {
+                            color: chartColors.text,
+                            font: { family: 'Outfit', size: 13, weight: '600' }
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return context.dataset.label + ': ' + context.parsed.y + '%';
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100,
+                        ticks: { 
+                            color: chartColors.text,
+                            callback: value => value + '%'
+                        },
+                        grid: { color: chartColors.grid }
+                    },
+                    x: {
+                        ticks: { color: chartColors.text },
+                        grid: { color: chartColors.grid }
+                    }
+                }
+            }
+        });
+
+        // Drop-off Analysis Chart
+        const dropoffCtx = document.getElementById('dropoffChart').getContext('2d');
+        new Chart(dropoffCtx, {
+            type: 'doughnut',
+            data: {
+                labels: [
+                    'Sense: Never Connected (37.6%)', 
+                    'Sense: Connected Not Completed (22.8%)',
+                    'Alex: Pending Response (52.2%)',
+                    'Alex: Responded Not Completed (13.8%)'
+                ],
+                datasets: [{
+                    data: [37.6, 22.8, 52.2, 13.8],
+                    backgroundColor: [
+                        'rgba(0, 255, 136, 0.6)',
+                        'rgba(0, 255, 136, 0.3)',
+                        'rgba(0, 212, 255, 0.6)',
+                        'rgba(0, 212, 255, 0.3)'
+                    ],
+                    borderColor: ['#141821', '#141821', '#141821', '#141821'],
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            color: chartColors.text,
+                            font: { family: 'Outfit', size: 11 },
+                            padding: 15
+                        }
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>
